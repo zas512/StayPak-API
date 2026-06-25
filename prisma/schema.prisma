@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  guest
+  host
+  both
+}
+
+enum CnicStatus {
+  pending
+  verified
+  rejected
+}
+
+enum PropertyType {
+  apartment
+  house
+  room
+  villa
+}
+
+enum ListingStatus {
+  draft
+  active
+  paused
+  deleted
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+  completed
+}
+
+enum BookingPaymentStatus {
+  unpaid
+  paid
+  refunded
+}
+
+enum PaymentGateway {
+  jazzcash
+  easypaisa
+  safepay
+}
+
+enum PaymentRecordStatus {
+  initiated
+  success
+  failed
+  refunded
+}
+
+enum ReviewTarget {
+  listing
+  host
+  guest
+}
+
+model User {
+  id           String      @id @default(uuid()) @db.Uuid
+  email        String      @unique @db.VarChar(255)
+  phone        String      @unique @db.VarChar(20)
+  passwordHash String      @map("password_hash") @db.VarChar(255)
+  role         Role        @default(guest)
+  fullName     String      @map("full_name") @db.VarChar(255)
+  cnicNumber   String?     @map("cnic_number") @db.VarChar(15)
+  cnicStatus   CnicStatus  @default(pending) @map("cnic_status")
+  cnicDocUrl   String?     @map("cnic_doc_url") @db.VarChar(500)
+  avatarUrl    String?     @map("avatar_url") @db.VarChar(500)
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  listings        Listing[]
+  guestBookings   Booking[] @relation("GuestBookings")
+  messagesSent    Message[]
+  reviewsWritten  Review[]  @relation("ReviewsWritten")
+  reviewsReceived Review[]  @relation("ReviewsReceived")
+
+  @@map("users")
+}
+
+model Listing {
+  id            String        @id @default(uuid()) @db.Uuid
+  hostId        String        @map("host_id") @db.Uuid
+  title         String        @db.VarChar(255)
+  description   String?       @db.Text
+  propertyType  PropertyType  @map("property_type")
+  city          String        @db.VarChar(100)
+  area          String?       @db.VarChar(100)
+  address       String?       @db.Text
+  lat           Decimal?      @db.Decimal(10, 7)
+  lng           Decimal?      @db.Decimal(10, 7)
+  maxGuests     Int           @default(1) @map("max_guests")
+  bedrooms      Int           @default(1)
+  bathrooms     Int           @default(1)
+  amenities     String[]
+  pricePerNight Decimal       @map("price_per_night") @db.Decimal(10, 2)
+  instantBook   Boolean       @default(false) @map("instant_book")
+  status        ListingStatus @default(draft)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  host         User             @relation(fields: [hostId], references: [id])
+  photos       ListingPhoto[]
+  availability  Availability[]
+  bookings      Booking[]
+
+  @@index([city], map: "idx_listings_city")
+  @@index([status], map: "idx_listings_status")
+  @@index([hostId], map: "idx_listings_host")
+  @@map("listings")
+}
+
+model ListingPhoto {
+  id         String   @id @default(uuid()) @db.Uuid
+  listingId  String   @map("listing_id") @db.Uuid
+  s3Key      String   @map("s3_key") @db.VarChar(500)
+  cdnUrl     String   @map("cdn_url") @db.VarChar(500)
+  sortOrder  Int      @default(0) @map("sort_order")
+  isCover    Boolean  @default(false) @map("is_cover")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@map("listing_photos")
+}
+
+model Availability {
+  id            String   @id @default(uuid()) @db.Uuid
+  listingId     String   @map("listing_id") @db.Uuid
+  date          DateTime @db.Date
+  isBlocked     Boolean  @default(false) @map("is_blocked")
+  overridePrice Decimal? @map("override_price") @db.Decimal(10, 2)
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, date], map: "availability_listing_id_date_key")
+  @@index([listingId, date], map: "idx_availability_listing_date")
+  @@map("availability")
+}
+
+model Booking {
+  id             String               @id @default(uuid()) @db.Uuid
+  listingId      String               @map("listing_id") @db.Uuid
+  guestId        String               @map("guest_id") @db.Uuid
+  checkIn        DateTime             @map("check_in") @db.Date
+  checkOut       DateTime             @map("check_out") @db.Date
+  guestsCount    Int                  @map("guests_count")
+  nights         Int
+  baseAmount     Decimal              @map("base_amount") @db.Decimal(10, 2)
+  serviceFee     Decimal              @map("service_fee") @db.Decimal(10, 2)
+  totalAmount    Decimal              @map("total_amount") @db.Decimal(10, 2)
+  status         BookingStatus        @default(pending)
+  paymentStatus  BookingPaymentStatus @default(unpaid) @map("payment_status")
+  cancelReason   String?              @map("cancel_reason") @db.Text
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  listing  Listing   @relation(fields: [listingId], references: [id])
+  guest    User      @relation("GuestBookings", fields: [guestId], references: [id])
+  payments Payment[]
+  messages Message[]
+  reviews  Review[]
+
+  @@index([listingId], map: "idx_bookings_listing")
+  @@index([guestId], map: "idx_bookings_guest")
+  @@index([status], map: "idx_bookings_status")
+  @@map("bookings")
+}
+
+model Payment {
+  id              String              @id @default(uuid()) @db.Uuid
+  bookingId       String              @map("booking_id") @db.Uuid
+  gateway         PaymentGateway
+  gatewayRef      String?             @map("gateway_ref") @db.VarChar(255)
+  amount          Decimal             @db.Decimal(10, 2)
+  currency        String              @default("PKR") @db.VarChar(3)
+  status          PaymentRecordStatus @default(initiated)
+  gatewayResponse Json?               @map("gateway_response")
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model Message {
+  id        String   @id @default(uuid()) @db.Uuid
+  bookingId String   @map("booking_id") @db.Uuid
+  senderId  String   @map("sender_id") @db.Uuid
+  body      String   @db.Text
+  isRead    Boolean  @default(false) @map("is_read")
+  sentAt    DateTime @default(now()) @map("sent_at") @db.Timestamptz(6)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  sender  User    @relation(fields: [senderId], references: [id])
+
+  @@index([bookingId, sentAt], map: "idx_messages_booking")
+  @@map("messages")
+}
+
+model Review {
+  id         String      @id @default(uuid()) @db.Uuid
+  bookingId  String      @map("booking_id") @db.Uuid
+  reviewerId String      @map("reviewer_id") @db.Uuid
+  revieweeId String      @map("reviewee_id") @db.Uuid
+  target     ReviewTarget
+  rating     Int
+  comment    String?     @db.Text
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  booking  Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  reviewer User    @relation("ReviewsWritten", fields: [reviewerId], references: [id])
+  reviewee User    @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+
+  @@unique([bookingId, reviewerId, target], map: "reviews_booking_id_reviewer_id_target_key")
+  @@map("reviews")
+}
