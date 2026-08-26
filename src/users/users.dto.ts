@@ -26,6 +26,9 @@ export class CreateUserDto {
   fullName!: string;
   @IsEnum(Role)
   role!: Role;
+  @IsString()
+  @IsOptional()
+  avatarUrl?: string;
 }
 
 export class UpdateUserDto {

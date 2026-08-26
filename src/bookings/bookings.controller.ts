@@ -27,39 +27,39 @@ export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
   @Post()
-  async create(@Req() req: Request, @Body() dto: CreateBookingDto) {
-    return this.bookingsService.create(req.user['sub'], dto);
+  async create(@Req() req: Request & { user: { sub: string; role: string } }, @Body() dto: CreateBookingDto) {
+    return this.bookingsService.create(req.user.sub, dto);
   }
 
   @Get()
-  async findAll(@Req() req: Request, @Query() query: BookingQueryDto) {
-    return this.bookingsService.findAll(query, req.user['sub'], req.user['role']);
+  async findAll(@Req() req: Request & { user: { sub: string; role: string } }, @Query() query: BookingQueryDto) {
+    return this.bookingsService.findAll(query, req.user.sub, req.user.role);
   }
 
   @Get(':id')
   async findById(
-    @Req() req: Request,
+    @Req() req: Request & { user: { sub: string; role: string } },
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.bookingsService.findById(id, req.user['sub'], req.user['role']);
+    return this.bookingsService.findById(id, req.user.sub, req.user.role);
   }
 
   @Patch(':id')
   async update(
-    @Req() req: Request,
+    @Req() req: Request & { user: { sub: string; role: string } },
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateBookingDto,
   ) {
-    return this.bookingsService.update(req.user['sub'], req.user['role'], id, dto);
+    return this.bookingsService.update(req.user.sub, req.user.role, id, dto);
   }
 
   @Post(':id/payment')
   async initiatePayment(
-    @Req() req: Request,
+    @Req() req: Request & { user: { sub: string; role: string } },
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: InitiatePaymentDto,
   ) {
-    return this.bookingsService.initiatePayment(id, req.user['sub'], dto.gateway);
+    return this.bookingsService.initiatePayment(id, req.user.sub, dto.gateway);
   }
 
   @Post('payment/callback')

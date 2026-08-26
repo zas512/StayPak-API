@@ -17,8 +17,8 @@ import {
   PaymentGateway,
   PaymentRecordStatus,
   Prisma,
-} from '../prisma/generated/prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+} from '@prisma/client';
+import { Prisma as PrismaNamespace } from '@prisma/client';
 
 @Injectable()
 export class BookingsService {

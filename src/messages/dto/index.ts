@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsUUID, Min, Max, Type } from 'class-validator';
+import { IsString, IsOptional, IsUUID, Min, Max, IsInt } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateMessageDto {
   @IsUUID()

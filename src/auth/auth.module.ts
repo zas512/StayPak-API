@@ -13,8 +13,8 @@ import { GoogleStrategy } from './strategies/google.strategy';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: configService.get<string>('JWT_EXPIRES_IN') ?? '15m' },
+        secret: configService.get<string>('JWT_SECRET') || 'default-secret',
+        signOptions: { expiresIn: (configService.get<string>('JWT_EXPIRES_IN') ?? '15m') as any },
       }),
       inject: [ConfigService],
     }),

@@ -6,7 +6,10 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMessageDto, MessageQueryDto } from './dto';
-import { Prisma } from '../prisma/generated/prisma/client';
+import { Prisma } from '@prisma/client';
+
+@Injectable()
+export class MessagesService {
 
 @Injectable()
 export class MessagesService {
@@ -192,7 +195,7 @@ export class MessagesService {
     return userBookings.map((booking) => ({
       bookingId: booking.id,
       listing: booking.listing,
-      otherUser: booking.listing.hostId === userId ? booking.guest : booking.listing.host,
+      otherUser: booking.listing.host.id === userId ? booking.guest : booking.listing.host,
       lastMessage: booking.messages[0] ?? null,
       unreadCount: booking.messages.filter(
         (m) => m.senderId !== userId && !m.isRead,

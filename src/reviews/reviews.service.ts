@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto, ReviewQueryDto } from './dto';
-import { ReviewTarget, BookingStatus, Prisma } from '../prisma/generated/prisma/client';
+import { ReviewTarget, BookingStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class ReviewsService {

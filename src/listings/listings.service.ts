@@ -10,7 +10,7 @@ import {
   UpdateListingDto,
   ListingQueryDto,
 } from './dto';
-import { Prisma, ListingStatus, PropertyType } from '../prisma/generated/prisma/client';
+import { Prisma, ListingStatus, PropertyType } from '@prisma/client';
 
 @Injectable()
 export class ListingsService {
@@ -104,7 +104,6 @@ export class ListingsService {
       // Get listing IDs that have availability for all dates in range
       const unavailableListingIds = await this.prisma.availability.findMany({
         where: {
-          listingId: { not: null },
           date: {
             gte: checkInDate,
             lt: checkOutDate,

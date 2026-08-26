@@ -28,8 +28,8 @@ export class ListingsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async create(@Req() req: Request, @Body() dto: CreateListingDto) {
-    return this.listingsService.create(req.user['sub'], dto);
+  async create(@Req() req: Request & { user: { sub: string } }, @Body() dto: CreateListingDto) {
+    return this.listingsService.create(req.user.sub, dto);
   }
 
   @Get()
@@ -54,8 +54,8 @@ export class ListingsController {
 
   @Get('host/mine')
   @UseGuards(JwtAuthGuard)
-  async findByHost(@Req() req: Request, @Query() query: ListingQueryDto) {
-    return this.listingsService.findByHost(req.user['sub'], query);
+  async findByHost(@Req() req: Request & { user: { sub: string } }, @Query() query: ListingQueryDto) {
+    return this.listingsService.findByHost(req.user.sub, query);
   }
 
   @Get(':id')
@@ -66,46 +66,46 @@ export class ListingsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   async update(
-    @Req() req: Request,
+    @Req() req: Request & { user: { sub: string } },
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateListingDto,
   ) {
-    return this.listingsService.update(req.user['sub'], id, dto);
+    return this.listingsService.update(req.user.sub, id, dto);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  async delete(@Req() req: Request, @Param('id', ParseUUIDPipe) id: string) {
-    return this.listingsService.delete(req.user['sub'], id);
+  async delete(@Req() req: Request & { user: { sub: string } }, @Param('id', ParseUUIDPipe) id: string) {
+    return this.listingsService.delete(req.user.sub, id);
   }
 
   @Post(':id/photos')
   @UseGuards(JwtAuthGuard)
   async addPhoto(
-    @Req() req: Request,
+    @Req() req: Request & { user: { sub: string } },
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AddPhotoDto,
   ) {
-    return this.listingsService.addPhoto(id, req.user['sub'], dto);
+    return this.listingsService.addPhoto(id, req.user.sub, dto);
   }
 
   @Delete(':id/photos/:photoId')
   @UseGuards(JwtAuthGuard)
   async removePhoto(
-    @Req() req: Request,
+    @Req() req: Request & { user: { sub: string } },
     @Param('id', ParseUUIDPipe) id: string,
     @Param('photoId', ParseUUIDPipe) photoId: string,
   ) {
-    return this.listingsService.removePhoto(id, req.user['sub'], photoId);
+    return this.listingsService.removePhoto(id, req.user.sub, photoId);
   }
 
   @Patch(':id/availability')
   @UseGuards(JwtAuthGuard)
   async updateAvailability(
-    @Req() req: Request,
+    @Req() req: Request & { user: { sub: string } },
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AvailabilityDto[],
   ) {
-    return this.listingsService.updateAvailability(id, req.user['sub'], dto);
+    return this.listingsService.updateAvailability(id, req.user.sub, dto);
   }
 }

@@ -20,6 +20,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Request } from 'express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { Multer } from 'multer';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -27,13 +28,13 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
-  async me(@Req() req: Request) {
-    return this.usersService.findOne(req.user['sub']);
+  async me(@Req() req: Request & { user: { sub: string } }) {
+    return this.usersService.findOne(req.user.sub);
   }
 
   @Patch('me')
-  async updateMe(@Req() req: Request, @Body() dto: UpdateUserDto) {
-    return this.usersService.update(req.user['sub'], dto);
+  async updateMe(@Req() req: Request & { user: { sub: string } }, @Body() dto: UpdateUserDto) {
+    return this.usersService.update(req.user.sub, dto);
   }
 
   @Post('me/avatar')
@@ -55,9 +56,9 @@ export class UsersController {
       limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
     }),
   )
-  async uploadAvatar(@Req() req: Request, @UploadedFile() file: Express.Multer.File) {
+  async uploadAvatar(@Req() req: Request & { user: { sub: string } }, @UploadedFile() file: Multer.File) {
     const avatarUrl = `/uploads/avatars/${file.filename}`;
-    return this.usersService.update(req.user['sub'], { avatarUrl });
+    return this.usersService.update(req.user.sub, { avatarUrl });
   }
 
   @Post('me/cnic')
@@ -80,12 +81,12 @@ export class UsersController {
     }),
   )
   async uploadCnic(
-    @Req() req: Request,
-    @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request & { user: { sub: string } },
+    @UploadedFile() file: Multer.File,
     @Body('cnicNumber') cnicNumber: string,
   ) {
     const cnicDocUrl = `/uploads/cnic/${file.filename}`;
-    return this.usersService.update(req.user['sub'], { cnicNumber, cnicDocUrl, cnicStatus: 'pending' });
+    return this.usersService.update(req.user.sub, { cnicNumber, cnicDocUrl, cnicStatus: 'pending' });
   }
 
   @Get('host/:id')

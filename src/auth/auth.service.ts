@@ -104,10 +104,15 @@ export class AuthService {
         fullName: googleUser.fullName,
         role: 'guest',
         avatarUrl: googleUser.avatarUrl,
+        password: randomPassword, // Add dummy password for CreateUserDto validation
       });
     } else if (!user.avatarUrl && googleUser.avatarUrl) {
       // Update avatar if not set
       await this.usersService.update(user.id, { avatarUrl: googleUser.avatarUrl });
+    }
+
+    if (!user) {
+      throw new UnauthorizedException('Failed to create or find user');
     }
 
     return this.generateTokenPair(user.id, user.email, user.role);
@@ -117,12 +122,12 @@ export class AuthService {
     const payload: JwtPayload = { sub: userId, email, role };
 
     const accessToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_SECRET,
+      secret: process.env.JWT_SECRET || 'default-secret',
       expiresIn: process.env.JWT_EXPIRES_IN ?? '15m',
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_REFRESH_SECRET,
+      secret: process.env.JWT_REFRESH_SECRET || 'default-refresh-secret',
       expiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
     });
 

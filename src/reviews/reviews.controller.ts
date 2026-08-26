@@ -20,8 +20,8 @@ export class ReviewsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async create(@Req() req: Request, @Body() dto: CreateReviewDto) {
-    return this.reviewsService.create(req.user['sub'], dto);
+  async create(@Req() req: Request & { user: { sub: string } }, @Body() dto: CreateReviewDto) {
+    return this.reviewsService.create(req.user.sub, dto);
   }
 
   @Get()
