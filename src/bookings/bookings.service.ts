@@ -11,14 +11,13 @@ import {
   UpdateBookingDto,
   BookingQueryDto,
 } from './dto';
+import { Prisma } from '../../prisma/generated/prisma/client';
 import {
   BookingStatus,
   BookingPaymentStatus,
   PaymentGateway,
   PaymentRecordStatus,
-  Prisma,
-} from '@prisma/client';
-import { Prisma as PrismaNamespace } from '@prisma/client';
+} from '../../prisma/generated/prisma/enums';
 
 @Injectable()
 export class BookingsService {
@@ -27,15 +26,15 @@ export class BookingsService {
   constructor(private readonly prisma: PrismaService) {}
 
   private calculatePricing(
-    pricePerNight: Decimal,
+    pricePerNight: Prisma.Decimal,
     nights: number,
     guestsCount: number,
-  ): { baseAmount: Decimal; serviceFee: Decimal; totalAmount: Decimal } {
-    const baseAmount = new Decimal(pricePerNight).times(nights);
+  ): { baseAmount: Prisma.Decimal; serviceFee: Prisma.Decimal; totalAmount: Prisma.Decimal } {
+    const baseAmount = new Prisma.Decimal(pricePerNight).times(nights);
     // Service fee: 10% of base amount, minimum PKR 500, maximum PKR 5000
-    const serviceFeePercent = new Decimal(0.10);
-    const minServiceFee = new Decimal(500);
-    const maxServiceFee = new Decimal(5000);
+    const serviceFeePercent = new Prisma.Decimal(0.10);
+    const minServiceFee = new Prisma.Decimal(500);
+    const maxServiceFee = new Prisma.Decimal(5000);
     let serviceFee = baseAmount.times(serviceFeePercent);
     if (serviceFee.lessThan(minServiceFee)) serviceFee = minServiceFee;
     if (serviceFee.greaterThan(maxServiceFee)) serviceFee = maxServiceFee;
@@ -230,7 +229,8 @@ export class BookingsService {
         throw new BadRequestException('Guests can only cancel bookings');
       }
       if (dto.status === BookingStatus.cancelled) {
-        if (![BookingStatus.pending, BookingStatus.confirmed].includes(booking.status)) {
+        const allowedStatuses: BookingStatus[] = [BookingStatus.pending, BookingStatus.confirmed];
+        if (!allowedStatuses.includes(booking.status)) {
           throw new BadRequestException('Cannot cancel this booking');
         }
         if (!dto.cancelReason) {
@@ -245,7 +245,8 @@ export class BookingsService {
         }
       }
       if (dto.status === BookingStatus.cancelled) {
-        if (![BookingStatus.pending, BookingStatus.confirmed].includes(booking.status)) {
+        const allowedStatuses: BookingStatus[] = [BookingStatus.pending, BookingStatus.confirmed];
+        if (!allowedStatuses.includes(booking.status)) {
           throw new BadRequestException('Cannot cancel this booking');
         }
         if (!dto.cancelReason) {

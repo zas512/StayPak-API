@@ -25,7 +25,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     _refreshToken: string,
     profile: any,
     done: VerifyCallback,
-  ): Promise<void> {
+  ): void {
     const { id, name, emails, photos } = profile as {
       id: string;
       name: { givenName: string; familyName: string };

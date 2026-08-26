@@ -10,6 +10,7 @@ import { UsersService } from '../users/users.service';
 import { RegisterDto, LoginDto } from './auth.dto';
 import { hash, compare } from 'bcrypt';
 import { randomBytes } from 'crypto';
+import { SignOptions } from 'jsonwebtoken';
 
 export interface TokenPair {
   accessToken: string;
@@ -97,15 +98,16 @@ export class AuthService {
       const randomPassword = randomBytes(32).toString('hex');
       const passwordHash = await hash(randomPassword, 12);
 
-      user = await this.usersService.create({
+      const createdUser = await this.usersService.create({
         email: googleUser.email,
         phone: `+92${randomBytes(5).toString('hex')}`, // Temporary phone, user should update
         passwordHash,
         fullName: googleUser.fullName,
         role: 'guest',
         avatarUrl: googleUser.avatarUrl,
-        password: randomPassword, // Add dummy password for CreateUserDto validation
+        password: randomPassword,
       });
+      user = createdUser;
     } else if (!user.avatarUrl && googleUser.avatarUrl) {
       // Update avatar if not set
       await this.usersService.update(user.id, { avatarUrl: googleUser.avatarUrl });
@@ -121,15 +123,18 @@ export class AuthService {
   private generateTokenPair(userId: string, email: string, role: string): TokenPair {
     const payload: JwtPayload = { sub: userId, email, role };
 
-    const accessToken = this.jwtService.sign(payload, {
+    const accessTokenOptions: SignOptions = {
       secret: process.env.JWT_SECRET || 'default-secret',
-      expiresIn: process.env.JWT_EXPIRES_IN ?? '15m',
-    });
+      expiresIn: (process.env.JWT_EXPIRES_IN ?? '15m') as SignOptions['expiresIn'],
+    };
 
-    const refreshToken = this.jwtService.sign(payload, {
+    const refreshTokenOptions: SignOptions = {
       secret: process.env.JWT_REFRESH_SECRET || 'default-refresh-secret',
-      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
-    });
+      expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as SignOptions['expiresIn'],
+    };
+
+    const accessToken = this.jwtService.sign(payload, accessTokenOptions);
+    const refreshToken = this.jwtService.sign(payload, refreshTokenOptions);
 
     const expiresIn = this.parseExpiresIn(process.env.JWT_EXPIRES_IN ?? '15m');
 

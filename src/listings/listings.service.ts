@@ -10,7 +10,8 @@ import {
   UpdateListingDto,
   ListingQueryDto,
 } from './dto';
-import { Prisma, ListingStatus, PropertyType } from '@prisma/client';
+import { Prisma } from '../../prisma/generated/prisma/client';
+import { ListingStatus, PropertyType } from '../../prisma/generated/prisma/enums';
 
 @Injectable()
 export class ListingsService {

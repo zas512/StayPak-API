@@ -13,7 +13,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PropertyType, ListingStatus } from '../../prisma/generated/prisma/client';
+import { PropertyType, ListingStatus } from '@prisma/client/runtime/client';
 
 export class CreateListingDto {
   @IsString()
