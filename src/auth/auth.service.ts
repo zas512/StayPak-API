@@ -107,7 +107,8 @@ export class AuthService {
         avatarUrl: googleUser.avatarUrl,
         password: randomPassword,
       });
-      user = createdUser;
+      // Use the created user - it has id, email, role which is all we need
+      user = createdUser as any;
     } else if (!user.avatarUrl && googleUser.avatarUrl) {
       // Update avatar if not set
       await this.usersService.update(user.id, { avatarUrl: googleUser.avatarUrl });
@@ -124,17 +125,21 @@ export class AuthService {
     const payload: JwtPayload = { sub: userId, email, role };
 
     const accessTokenOptions: SignOptions = {
-      secret: process.env.JWT_SECRET || 'default-secret',
       expiresIn: (process.env.JWT_EXPIRES_IN ?? '15m') as SignOptions['expiresIn'],
     };
 
     const refreshTokenOptions: SignOptions = {
-      secret: process.env.JWT_REFRESH_SECRET || 'default-refresh-secret',
       expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as SignOptions['expiresIn'],
     };
 
-    const accessToken = this.jwtService.sign(payload, accessTokenOptions);
-    const refreshToken = this.jwtService.sign(payload, refreshTokenOptions);
+    const accessToken = this.jwtService.sign(payload, {
+      ...accessTokenOptions,
+      secret: process.env.JWT_SECRET || 'default-secret',
+    });
+    const refreshToken = this.jwtService.sign(payload, {
+      ...refreshTokenOptions,
+      secret: process.env.JWT_REFRESH_SECRET || 'default-refresh-secret',
+    });
 
     const expiresIn = this.parseExpiresIn(process.env.JWT_EXPIRES_IN ?? '15m');
 

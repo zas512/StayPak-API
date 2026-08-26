@@ -13,7 +13,7 @@ import {
   BookingStatus,
   BookingPaymentStatus,
   PaymentGateway,
-} from '@prisma/client/runtime/client';
+} from '@prisma/generated/prisma';
 
 export class CreateBookingDto {
   @IsString()

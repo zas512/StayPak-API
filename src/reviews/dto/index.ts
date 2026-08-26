@@ -1,6 +1,6 @@
 import { IsEnum, IsInt, IsOptional, IsString, Min, Max, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ReviewTarget } from '@prisma/client/runtime/client';
+import { ReviewTarget } from '@prisma/generated/prisma';
 
 export class CreateReviewDto {
   @IsUUID()
