@@ -7,6 +7,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { ListingsModule } from './listings/listings.module';
+import { BookingsModule } from './bookings/bookings.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -32,6 +36,10 @@ import { AuthModule } from './auth/auth.module';
     UsersModule,
     PrismaModule,
     AuthModule,
+    ListingsModule,
+    BookingsModule,
+    ReviewsModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [

@@ -8,6 +8,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { Role, CnicStatus } from '../../prisma/generated/prisma/client';
+import { Type } from 'class-transformer';
 
 export class CreateUserDto {
   @IsEmail()
@@ -46,4 +47,18 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   avatarUrl?: string;
+  @IsString()
+  @IsOptional()
+  cnicNumber?: string;
+  @IsString()
+  @IsOptional()
+  cnicDocUrl?: string;
+}
+
+export class CnicUploadDto {
+  @IsString()
+  @Matches(/^\d{5}-\d{7}-\d{1}$/, {
+    message: 'CNIC must be in format 12345-1234567-1',
+  })
+  cnicNumber!: string;
 }

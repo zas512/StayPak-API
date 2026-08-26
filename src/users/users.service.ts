@@ -14,7 +14,7 @@ export class UsersService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateUserDto) {
+  async create(dto: CreateUserDto & { passwordHash?: string }) {
     const existing = await this.prisma.user.findFirst({
       where: {
         OR: [{ email: dto.email }, { phone: dto.phone }],
@@ -27,7 +27,7 @@ export class UsersService {
           : 'Phone number already in use',
       );
     }
-    const passwordHash = await hash(dto.password, 10);
+    const passwordHash = dto.passwordHash ?? (await hash(dto.password, 12));
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
@@ -35,6 +35,7 @@ export class UsersService {
         passwordHash,
         fullName: dto.fullName,
         role: dto.role,
+        avatarUrl: dto.avatarUrl,
       },
       select: {
         id: true,
@@ -52,8 +53,9 @@ export class UsersService {
     return user;
   }
 
-  async findAll() {
+  async findAll(role?: string) {
     const users = await this.prisma.user.findMany({
+      where: role ? { role: role as any } : undefined,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -93,6 +95,10 @@ export class UsersService {
 
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({ where: { email } });
+  }
+
+  async findByPhone(phone: string) {
+    return this.prisma.user.findUnique({ where: { phone } });
   }
 
   async update(id: string, dto: UpdateUserDto) {
