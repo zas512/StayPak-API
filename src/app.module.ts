@@ -1,37 +1,37 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
-import { UsersModule } from './users/users.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { AuthModule } from './auth/auth.module';
-import { ListingsModule } from './listings/listings.module';
-import { BookingsModule } from './bookings/bookings.module';
-import { ReviewsModule } from './reviews/reviews.module';
-import { MessagesModule } from './messages/messages.module';
+import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { APP_GUARD } from "@nestjs/core";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
+import { AuthModule } from "./auth/auth.module";
+import { BookingsModule } from "./bookings/bookings.module";
+import { validate } from "./config/env.validation";
+import { ListingsModule } from "./listings/listings.module";
+import { MessagesModule } from "./messages/messages.module";
+import { PrismaModule } from "./prisma/prisma.module";
+import { ReviewsModule } from "./reviews/reviews.module";
+import { UsersModule } from "./users/users.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      validate
     }),
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          // 100 requests per 60 seconds per IP
-          name: 'default',
+          name: "default",
           ttl: 60000,
-          limit: 100,
+          limit: 100
         },
         {
-          // 5 requests per 60 seconds per IP
-          name: 'auth',
+          name: "auth",
           ttl: 60000,
-          limit: 5,
-        },
-      ],
+          limit: 5
+        }
+      ]
     }),
     UsersModule,
     PrismaModule,
@@ -39,15 +39,15 @@ import { MessagesModule } from './messages/messages.module';
     ListingsModule,
     BookingsModule,
     ReviewsModule,
-    MessagesModule,
+    MessagesModule
   ],
   controllers: [AppController],
   providers: [
     AppService,
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
-  ],
+      useClass: ThrottlerGuard
+    }
+  ]
 })
 export class AppModule {}
