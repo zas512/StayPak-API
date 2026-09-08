@@ -1,16 +1,15 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from '../users/users.service';
-import { RegisterDto, LoginDto } from './auth.dto';
-import { hash, compare } from 'bcrypt';
-import { randomBytes } from 'crypto';
+import { compare, hash } from 'bcrypt';
 import { SignOptions } from 'jsonwebtoken';
+import { randomBytes } from 'node:crypto';
+import { UsersService } from '../users/users.service';
+import { LoginDto, RegisterDto } from './auth.dto';
 
 export interface TokenPair {
   accessToken: string;
@@ -44,16 +43,23 @@ export class AuthService {
       throw new ConflictException('Phone number already in use');
     }
 
+    const fullName =
+      dto.fullName ||
+      `${dto.firstName || ''} ${dto.lastName || ''}`.trim() ||
+      'User';
+
     const passwordHash = await hash(dto.password, 12);
     const user = await this.usersService.create({
-      ...dto,
+      email: dto.email,
+      phone: dto.phone,
+      password: dto.password,
       passwordHash,
+      fullName,
       role: 'guest',
     });
 
     return this.generateTokenPair(user.id, user.email, user.role);
   }
-
   async login(dto: LoginDto): Promise<TokenPair> {
     const user = await this.usersService.findByEmail(dto.email);
     if (!user) {
@@ -81,6 +87,7 @@ export class AuthService {
 
       return this.generateTokenPair(user.id, user.email, user.role);
     } catch (error) {
+      this.logger.error('Invalid refresh token', error);
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -111,7 +118,9 @@ export class AuthService {
       user = createdUser as any;
     } else if (!user.avatarUrl && googleUser.avatarUrl) {
       // Update avatar if not set
-      await this.usersService.update(user.id, { avatarUrl: googleUser.avatarUrl });
+      await this.usersService.update(user.id, {
+        avatarUrl: googleUser.avatarUrl,
+      });
     }
 
     if (!user) {
@@ -121,15 +130,21 @@ export class AuthService {
     return this.generateTokenPair(user.id, user.email, user.role);
   }
 
-  private generateTokenPair(userId: string, email: string, role: string): TokenPair {
+  private generateTokenPair(
+    userId: string,
+    email: string,
+    role: string,
+  ): TokenPair {
     const payload: JwtPayload = { sub: userId, email, role };
 
     const accessTokenOptions: SignOptions = {
-      expiresIn: (process.env.JWT_EXPIRES_IN ?? '15m') as SignOptions['expiresIn'],
+      expiresIn: (process.env.JWT_EXPIRES_IN ??
+        '15m') as SignOptions['expiresIn'],
     };
 
     const refreshTokenOptions: SignOptions = {
-      expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as SignOptions['expiresIn'],
+      expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ??
+        '7d') as SignOptions['expiresIn'],
     };
 
     const accessToken = this.jwtService.sign(payload, {
@@ -150,15 +165,20 @@ export class AuthService {
     const match = expiresIn.match(/^(\d+)([smhd])$/);
     if (!match) return 900; // default 15 minutes
 
-    const value = parseInt(match[1], 10);
+    const value = Number.parseInt(match[1], 10);
     const unit = match[2];
 
     switch (unit) {
-      case 's': return value;
-      case 'm': return value * 60;
-      case 'h': return value * 3600;
-      case 'd': return value * 86400;
-      default: return 900;
+      case 's':
+        return value;
+      case 'm':
+        return value * 60;
+      case 'h':
+        return value * 3600;
+      case 'd':
+        return value * 86400;
+      default:
+        return 900;
     }
   }
 }

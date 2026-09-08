@@ -1,11 +1,11 @@
 import {
   Injectable,
-  OnModuleInit,
-  OnModuleDestroy,
   Logger,
+  OnModuleDestroy,
+  OnModuleInit,
 } from '@nestjs/common';
-import { PrismaClient } from '../../prisma/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '../../prisma/generated/prisma/client';
 
 @Injectable()
 export class PrismaService
@@ -23,11 +23,41 @@ export class PrismaService
 
   async onModuleInit(): Promise<void> {
     try {
+      const start = Date.now();
       await this.$connect();
-      this.logger.log('Database connected successfully');
+      await this.$queryRaw`SELECT 1`;
+      const latency = Date.now() - start;
+      this.logger.log(`Database connected successfully (Ping: ${latency}ms)`);
     } catch (error: unknown) {
       this.logger.error('Database connection failed', error);
       throw error;
+    }
+  }
+
+  async testConnection(): Promise<{
+    connected: boolean;
+    latencyMs: number;
+    timestamp: string;
+    error?: string;
+  }> {
+    const start = Date.now();
+    try {
+      await this.$queryRaw`SELECT 1`;
+      return {
+        connected: true,
+        latencyMs: Date.now() - start,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      return {
+        connected: false,
+        latencyMs: Date.now() - start,
+        timestamp: new Date().toISOString(),
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Unknown database connection error',
+      };
     }
   }
 
